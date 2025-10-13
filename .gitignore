@@ -1,0 +1,18 @@
+# Sanal ortam
+venv/
+
+# Python derleme dosyaları
+__pycache__/
+
+# İşletim sistemi dosyaları
+.DS_Store
+
+# Vektör Veritabanı
+chroma_db/
+
+# API Anahtarları (bizim kullanmadık ama önemli)
+.env
+
+# Veri setini yüklemesi istenmediyse (ancak bizde isteniyor olabilir)
+# veri_seti/
+

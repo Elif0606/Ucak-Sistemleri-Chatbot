@@ -13,7 +13,20 @@ GEMINI_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL = "text-embedding-004"
 VECTOR_DB_DIR = "./chroma_db"
 # Lütfen KONTROL EDİN: PDF_PATH değerini kendi dosya adınızla değiştirin!
-PDF_PATH = "./veri_seti/ucak_kontrol_sistemleri.pdf" 
+import os
+import streamlit as st
+from functools import lru_cache
+
+# ... diğer importlar ...
+
+# MODEL AYARLARI
+GEMINI_MODEL = "gemini-2.5-flash"
+EMBEDDING_MODEL = "text-embedding-004"
+VECTOR_DB_DIR = "./chroma_db"
+
+# GÜVENLİ PDF YOLU TANIMLAMA (Streamlit Cloud Uyumlu)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+PDF_PATH = os.path.join(current_dir, "veri_seti", "ucak_kontrol_sistemleri.pdf")
 
 @st.cache_resource
 def setup_rag_system():

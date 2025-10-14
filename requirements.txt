@@ -1,5 +1,5 @@
 streamlit
-langchain-community  # Hatanın kaynağı olan eksik paket
+langchain-community 
 langchain
 langchain-google-genai
 pypdf

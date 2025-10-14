@@ -84,7 +84,7 @@ Aşağıdaki görselde, chatbot'un dokümanımızdan yararlanarak <sorunuzu yaz�
 
 Aşağıdaki görselde, chatbot'un dokümanımızdan yararlanarak <sorunuzu yazın> sorusuna verdiği cevabı görebilirsiniz:
 
-![Chatbot Demo Görseli](assets/chatbot_demo.3png)
+![Chatbot Demo Görseli](assets/chatbot_demo3.png)
 
 
 

@@ -35,11 +35,16 @@ except KeyError:
     st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil!")
     API_KEY = None
     
-# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA - HATA BURADAYDI!
+# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA - Bu kısmı bulun
 if API_KEY:
-    # Bu, Google API'ye bağlantıyı kuran asıl nesnedir.
+    # Bu nesneyi oluştururken, eski 'EMBEDDING_MODEL_NAME' dizesi yerine 
+    # 'model' parametresini kullanmayı deneyeceğiz ve Pydantic'i atlayacağız.
+    # Ancak, en güvenilir yol, model adını Google'ın kabul ettiği en güncel adla değiştirmektir.
+    
     EMBEDDING_FUNCTION = GoogleGenerativeAIEmbeddings(
-        model=EMBEDDING_MODEL_NAME, 
+        # Model adını, Google'ın en güncel ve kararlı modeline güncelliyoruz.
+        # Genellikle LangChain'de bu model adı daha sık kabul edilir.
+        model="embedding-001",
         api_key=API_KEY
     )
 else:

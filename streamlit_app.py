@@ -23,6 +23,43 @@ from functools import lru_cache
 GEMINI_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL = "text-embedding-004"
 VECTOR_DB_DIR = "./chroma_db"
+# MODEL AYARLARI
+GEMINI_MODEL = "gemini-2.5-flash"
+EMBEDDING_MODEL_NAME = "text-embedding-004" # Adını değiştirdik ki karışmasın
+VECTOR_DB_DIR = "./chroma_db"
+
+# 1. API Anahtarını Alma (st.secrets'tan almalısınız)
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except KeyError:
+    st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil!")
+    API_KEY = None
+    
+# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA - HATA BURADAYDI!
+if API_KEY:
+    # Bu, Google API'ye bağlantıyı kuran asıl nesnedir.
+    EMBEDDING_FUNCTION = GoogleGenerativeAIEmbeddings(
+        model=EMBEDDING_MODEL_NAME, 
+        api_key=API_KEY
+    )
+else:
+    EMBEDDING_FUNCTION = None
+
+
+# @st.cache_resource
+def setup_rag_system():
+    # Bu fonksiyon artık EMBEDDING_FUNCTION nesnesini kullanacak
+    if EMBEDDING_FUNCTION is None:
+        return None
+        
+    # 2. Vektör DB'yi Kurma ve Dizinleme
+    # ... Chroma.from_documents() kısmında EMBEDDING_FUNCTION nesnesini gönderin
+    vector_store = Chroma.from_documents(
+        chunks, 
+        EMBEDDING_FUNCTION, # ARTIK NESNEYİ GÖNDERİYORUZ
+        persist_directory=VECTOR_DB_DIR
+    )
+    # ... geri kalan kod ...
 
 # GÜVENLİ PDF YOLU TANIMLAMA (Streamlit Cloud Uyumlu)
 current_dir = os.path.dirname(os.path.abspath(__file__))

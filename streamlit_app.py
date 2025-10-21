@@ -35,18 +35,15 @@ except KeyError:
     st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil!")
     API_KEY = None
     
-# BU İKİ SATIR Pydantic Hatalarını ÇÖZECEKTİR:
-# Anahtarı, LangChain'in dahili olarak baktığı ortam değişkenine zorla tanımla
+# GEREKLİ ORTAM DEĞİŞKENİNİ SADECE KULLANIM İÇİN AYARLIYORUZ (önceki hatayı önlemek için)
 if API_KEY:
     os.environ["GEMINI_API_KEY"] = API_KEY 
-    
-# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA
+
+# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA (model adı "embedding-001" olarak kalsın)
 if API_KEY:
     EMBEDDING_FUNCTION = GoogleGenerativeAIEmbeddings(
-        # Model adını LangChain'in beklediği adla bırakıyoruz.
-        # Artık API anahtarını doğrudan vermiyoruz, çünkü onu os.environ'a koyduk.
+        # API anahtarını doğrudan vermeyin (os.environ'a koyduk)
         model="embedding-001" 
-        # api_key=API_KEY ARTIK BURADA OLMAYACAK!
     )
 else:
     EMBEDDING_FUNCTION = None

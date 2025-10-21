@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmb
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.chains.retrieval_qa import RetrievalQA
+from langchain.chains import RetrievalQA
 
 # MODEL AYARLARI
 GEMINI_MODEL = "gemini-2.5-flash"

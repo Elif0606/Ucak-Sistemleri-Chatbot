@@ -28,24 +28,25 @@ GEMINI_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL_NAME = "text-embedding-004" # Adını değiştirdik ki karışmasın
 VECTOR_DB_DIR = "./chroma_db"
 
-# 1. API Anahtarını Alma (st.secrets'tan almalısınız)
+# 1. API Anahtarını Streamlit Secrets'tan Alma
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except KeyError:
     st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil!")
     API_KEY = None
     
-# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA - Bu kısmı bulun
+# BU İKİ SATIR Pydantic Hatalarını ÇÖZECEKTİR:
+# Anahtarı, LangChain'in dahili olarak baktığı ortam değişkenine zorla tanımla
 if API_KEY:
-    # Bu nesneyi oluştururken, eski 'EMBEDDING_MODEL_NAME' dizesi yerine 
-    # 'model' parametresini kullanmayı deneyeceğiz ve Pydantic'i atlayacağız.
-    # Ancak, en güvenilir yol, model adını Google'ın kabul ettiği en güncel adla değiştirmektir.
+    os.environ["GEMINI_API_KEY"] = API_KEY 
     
+# GÖMME (EMBEDDING) NESNESİNİ OLUŞTURMA
+if API_KEY:
     EMBEDDING_FUNCTION = GoogleGenerativeAIEmbeddings(
-        # Model adını, Google'ın en güncel ve kararlı modeline güncelliyoruz.
-        # Genellikle LangChain'de bu model adı daha sık kabul edilir.
-        model="embedding-001",
-        api_key=API_KEY
+        # Model adını LangChain'in beklediği adla bırakıyoruz.
+        # Artık API anahtarını doğrudan vermiyoruz, çünkü onu os.environ'a koyduk.
+        model="embedding-001" 
+        # api_key=API_KEY ARTIK BURADA OLMAYACAK!
     )
 else:
     EMBEDDING_FUNCTION = None

@@ -41,7 +41,6 @@ def setup_rag_system():
         return None, None
 
     # 2. Metni Parçalama (Basit Metin Parçalayıcı)
-    # Cümle bazlı parçalama, şimdi daha güçlü embedding modeli kullanacağız.
     sentences = [s.strip() for s in text.split('.') if s.strip()]
 
     # 3. Gemini Embedding Modelini Hazırlama
@@ -63,30 +62,38 @@ def setup_rag_system():
             # Gemini API çağrısı
             response = client.models.embed_content(
                 model=embedding_model_name,
-                contents=batch # Buradaki 'contents' doğru
+                contents=batch # Doğru parametre adı
             )
-            # Gelen gömmeleri ana listeye ekle
-            all_embeddings.extend(response.embeddings) # Doğru erişim
+            # Gelen gömmeleri ana listeye ekle (Doğru özellik adı)
+            all_embeddings.extend(response.embeddings) 
             st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
         
-        # 5. Güvenlik Kontrolü ve NumPy'a Dönüştürme
-    if not all_embeddings:
-        st.error("HATA: Gemini API'den hiçbir gömme (embedding) alınamadı. Lütfen API anahtarınızı veya PDF içeriğini kontrol edin.")
+    except Exception as e:
+        # Eğer API çağrısında hata olursa (Ağ/API Anahtarı)
+        st.error(f"Gemini Embedding Hatası: {e}")
         return None, None, None # Hata durumunda fonksiyonu sonlandır
+    
+    # ******* ÖNEMLİ: GİRİNTİ BURADA BİTİYOR *******
+    
+    # 5. Güvenlik Kontrolü ve NumPy'a Dönüştürme
+    # Bu kontrol, try/except bloğu bittikten sonra çalışmalıdır.
+    if not all_embeddings: 
+        st.error("HATA: Gemini API'den hiçbir gömme (embedding) alınamadı. Lütfen API anahtarınızı veya PDF içeriğini kontrol edin.")
+        return None, None, None
 
-    # HATA VEREN KISIM BURASIYDI! all_embeddings.extend() kullanımı, NumPy dizisi oluştururken hata yaratabilir.
-    # Çözüm: NumPy'a güvenli dönüştürme için np.array(all_embeddings) yerine np.vstack kullanın.
     try:
-        embeddings = np.vstack(all_embeddings) # Tüm listeleri dikey olarak istifle
+        # NumPy'a güvenli dönüştürme için np.vstack kullanma (IndexError çözümü)
+        embeddings = np.vstack(all_embeddings) 
     except ValueError as e:
         st.error(f"Embeddings dizisi oluşturulurken hata: {e}. Muhtemelen boş bir gömme geldi.")
         return None, None, None
 
-    # Kodun hata verdiği satır (şimdi çalışması gerekiyor):
+    # FAISS indeksi oluşturma
     dimension = embeddings.shape[1] 
     index = faiss.IndexFlatL2(dimension)
     index.add(embeddings)
     
+    # Model adını döndürme
     return embedding_model_name, index, sentences
 
 # --- CEVAP OLUŞTURMA FONKSİYONU ---

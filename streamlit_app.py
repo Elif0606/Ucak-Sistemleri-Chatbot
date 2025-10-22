@@ -1,12 +1,16 @@
 import os
 import streamlit as st
 from functools import lru_cache
-
+# ... Diğer importlarınızın altına ekleyin ...
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI # LLM'i doğru kullanmak için
+# ...
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.chains.retrieval_qa.base import RetrievalQA
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
 
 # MODEL AYARLARI
 GEMINI_MODEL = "gemini-2.5-flash"
@@ -48,21 +52,6 @@ if API_KEY:
 else:
     EMBEDDING_FUNCTION = None
 
-
-# @st.cache_resource
-def setup_rag_system():
-    # Bu fonksiyon artık EMBEDDING_FUNCTION nesnesini kullanacak
-    if EMBEDDING_FUNCTION is None:
-        return None
-        
-    # 2. Vektör DB'yi Kurma ve Dizinleme
-    # ... Chroma.from_documents() kısmında EMBEDDING_FUNCTION nesnesini gönderin
-    vector_store = Chroma.from_documents(
-        chunks, 
-        EMBEDDING_FUNCTION, # ARTIK NESNEYİ GÖNDERİYORUZ
-        persist_directory=VECTOR_DB_DIR
-    )
-    # ... geri kalan kod ...
 
 # GÜVENLİ PDF YOLU TANIMLAMA (Streamlit Cloud Uyumlu)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -112,11 +101,28 @@ def setup_rag_system():
         google_api_key=api_key
     ) 
     
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff", 
-        retriever=retriever
-    )
+    # 1. Prompt Şablonu Tanımlama
+system_prompt = (
+    "Sen bir uçak sistemleri uzmanısın. Yalnızca verilen bağlamı kullanarak soruları Türkçe yanıtla. "
+    "Cevabı bağlamda bulamazsan 'Verilen bağlamda bu bilgi bulunmamaktadır.' de."
+    "\n\n{context}"
+)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", system_prompt),
+        ("human", "{input}"),
+    ]
+)
+
+# 2. Bağlamı Birleştiren Zinciri Oluşturma
+combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+
+# 3. Nihai Retrieval Zincirini Oluşturma
+qa_chain = create_retrieval_chain(
+    retriever, # Yukarıda tanımlanan retriever nesnesi
+    combine_docs_chain
+)
     return qa_chain
 
 # 6. Streamlit Arayüzü

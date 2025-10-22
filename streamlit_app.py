@@ -64,8 +64,8 @@ def setup_rag_system():
                 model=embedding_model_name,
                 contents=batch # Doğru parametre adı
             )
-            # Gelen gömmeleri ana listeye ekle (Doğru özellik adı)
-            all_embeddings.extend(response.embeddings) 
+            # BURADAKİ DÜZELTME: API'den gelen listeyi NumPy dizisine dönüştürüp ekleyin
+            all_embeddings.append(np.array(response.embeddings)) # <-- Her bir batch'i NumPy array'ine çeviriyoruz
             st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
         
     except Exception as e:

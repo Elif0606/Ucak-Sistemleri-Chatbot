@@ -9,8 +9,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
-# Yeni LCEL (Expression Language) Zincir Fonksiyonları
-# İki fonksiyonu da doğrudan topluluk paketinin kökünden çekmeyi deniyoruz.
+# Yeni LCEL (Expression Expression) Zincir Fonksiyonları
 from langchain_community.chains import create_stuff_documents_chain
 from langchain_community.chains import create_retrieval_chain
 

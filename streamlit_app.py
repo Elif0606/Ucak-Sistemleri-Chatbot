@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-import google.generativeai as genai
+import google.genai as genai
 from google.genai.errors import APIError
 
 # RAG için gerekli kütüphaneler

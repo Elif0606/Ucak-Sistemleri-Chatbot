@@ -10,10 +10,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
 # Yeni LCEL (Expression Language) Zincir Fonksiyonları
-# combine_documents artık zincir türünün altındaki klasörde
-from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+# Modülün doğrudan topluluk paketindeki doğru konumu
+from langchain_community.chains.combine_documents import create_stuff_documents_chain
 
-# create_retrieval_chain artık 'chains' klasörünün içindeki dosyanın içinde
+# LangChain, create_retrieval_chain'i bazen ana paketin köküne taşır
 from langchain.chains import create_retrieval_chain
 
 # --- SABİT AYARLAR ---

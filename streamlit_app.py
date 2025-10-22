@@ -1,152 +1,135 @@
 import os
 import streamlit as st
-from functools import lru_cache
+from google import genai
+from google.genai.errors import APIError
 
-# LangChain Çekirdek ve Topluluk Bileşenleri
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-
-# Yeni LCEL (Expression Expression) Zincir Fonksiyonları
-from langchain_community.chains import create_stuff_documents_chain
-from langchain_community.chains import create_retrieval_chain
+# RAG için gerekli kütüphaneler
+from pypdf import PdfReader
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
 
 # --- SABİT AYARLAR ---
-GEMINI_MODEL = "gemini-2.5-flash"
-EMBEDDING_MODEL = "embedding-001"
-VECTOR_DB_DIR = "./chroma_db"
-
-# GÜVENLİ PDF YOLU TANIMLAMA
-current_dir = os.path.dirname(os.path.abspath(__file__))
-PDF_PATH = os.path.join(current_dir, "veri_seti", "ucak_kontrol_sistemleri.pdf")
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2" # Hızlı ve yerel bir embedding modeli
+VECTOR_DB_FILE = "faiss_index.bin"
+PDF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "veri_seti", "ucak_kontrol_sistemleri.pdf")
 
 # API Anahtarını Streamlit Secrets'tan güvenli bir şekilde al
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
-    # Pydantic v1 hatasını atlamak için ortam değişkenini zorla tanımla
-    os.environ["GEMINI_API_KEY"] = API_KEY 
+    genai.configure(api_key=API_KEY)
 except KeyError:
     st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil! Lütfen secrets.toml dosyasını kontrol edin.")
     API_KEY = None
 
-# Gömme fonksiyonunu (Embedding Function) sadece API anahtarı varsa oluştur
-if API_KEY:
-    EMBEDDING_FUNCTION = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
-else:
-    EMBEDDING_FUNCTION = None
-
+# --- RAG SİSTEMİ KURULUMU (Cache Edilmiş) ---
 
 @st.cache_resource
 def setup_rag_system():
-    if EMBEDDING_FUNCTION is None:
-        return None
+    if not API_KEY:
+        return None, None
 
-    # 1. LLM ve Embedding Modelini Tanımlama
-    llm = ChatGoogleGenerativeAI(
-        model=GEMINI_MODEL,  
-        temperature=0.1,
-        # API anahtarı zaten os.environ'da olduğu için burada tekrar vermeye gerek yok
-    )
-
-    # 2. Veri Yükleme
+    # 1. Metni PDF'ten Çıkarma
     try:
-        loader = PyPDFLoader(PDF_PATH)
-        documents = loader.load()
+        reader = PdfReader(PDF_PATH)
+        text = "".join(page.extract_text() for page in reader.pages)
     except Exception as e:
-        st.error(f"HATA: PDF yüklenirken bir sorun oluştu. Dosya yolu: {e}")
-        return None
+        st.error(f"HATA: PDF yüklenemedi veya okunamadı: {e}")
+        return None, None
 
-    # 3. Metin Parçalama (Chunking)
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    chunks = text_splitter.split_documents(documents)
+    # 2. Metni Parçalama (Basit Metin Parçalayıcı)
+    # Cümle bazlı parçalama, daha sonra embedding yapısını korumak için
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
 
-    # 4. Vektör Veritabanı Oluşturma ve Retriever Tanımlama
-    vector_store = Chroma.from_documents(
-        documents=chunks,
-        embedding=EMBEDDING_FUNCTION,
-        persist_directory=VECTOR_DB_DIR
-    )
-    retriever = vector_store.as_retriever()
-
-    # 5. Yeni LCEL RAG Zincirini Kurma (RetrievalQA yerine)
+    # 3. Embedding Modelini Yükleme (Lokal Model)
+    # Bu model, FAISS ile kullanılacak gömmeleri hızlıca oluşturur
+    embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
     
-    # Prompt Şablonu
+    # 4. Gömmeleri Oluşturma ve FAISS İndeksi Kurma
+    embeddings = embedding_model.encode(sentences, convert_to_tensor=True).cpu().numpy()
+    
+    # FAISS indeksi: Vektörleri aramak için
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(embeddings)
+    
+    return embedding_model, index, sentences
+
+
+# --- CEVAP OLUŞTURMA FONKSİYONU ---
+
+def generate_rag_response(prompt, embedding_model, index, sentences):
+    
+    # 1. Prompt'un Gömmesini Oluşturma
+    query_embedding = embedding_model.encode([prompt], convert_to_tensor=True).cpu().numpy()
+    
+    # 2. En Yakın Parçaları FAISS ile Arama
+    k = 3 # En iyi 3 parçayı al
+    distances, indices = index.search(query_embedding, k)
+    
+    # 3. Bağlamı (Context) Birleştirme
+    context_chunks = [sentences[i] for i in indices[0]]
+    context = "\n".join(context_chunks)
+
+    # 4. Gemini için Prompt Şablonu
     system_prompt = (
-        "Sen bir uçak sistemleri uzmanısın. Yalnızca verilen bağlamı kullanarak soruları Türkçe yanıtla. "
+        "Sen bir uçak sistemleri uzmanısın. Yalnızca aşağıdaki BAĞLAMI kullanarak soruları Türkçe yanıtla. "
         "Cevabı bağlamda bulamazsan 'Verilen bağlamda bu bilgi bulunmamaktadır.' de."
-        "\n\n{context}"
+        "\n\n--- BAĞLAM ---\n"
+        f"{context}"
     )
+    
+    # 5. Gemini API Çağrısı
+    try:
+        client = genai.Client(api_key=API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                {"role": "user", "parts": [{"text": system_prompt}]},
+                {"role": "user", "parts": [{"text": "Soru: " + prompt}]}
+            ],
+            config={"temperature": 0.1}
+        )
+        return response.text
 
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "{input}"),
-        ]
-    )
-
-    # Bağlamı Birleştirme Zinciri
-    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-
-    # Nihai Retrieval Zinciri
-    qa_chain = create_retrieval_chain(
-        retriever, 
-        combine_docs_chain
-    )
-    return qa_chain
+    except APIError as e:
+        return f"Gemini API Hatası: {e}"
+    except Exception as e:
+        return f"Beklenmedik Hata: {e}"
 
 
 # --- STREAMLIT ARAYÜZÜ ---
 
 def main():
-    # 1. Sayfa Ayarları
-    st.set_page_config(page_title="RAG Chatbot", layout="wide")
-    st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
-    st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")
+    st.set_page_config(page_title="Acil RAG Chatbot", layout="wide")
+    st.title("Acil Uçak Kontrol Sistemleri RAG Chatbot 🚀")
+    st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i (LangChain'siz Acil Çözüm)")
 
-    # 2. RAG Sistemini Kurma
-    qa_chain = setup_rag_system()
-    
-    if qa_chain is None:
+    # 1. RAG Sistemini Kurma
+    rag_data = setup_rag_system()
+    if rag_data is None:
         return
+    embedding_model, index, sentences = rag_data
 
-    # 3. Sohbet Geçmişini Başlatma
+    # 2. Sohbet Geçmişini Başlatma
     if "messages" not in st.session_state:
         st.session_state["messages"] = [
-            {"role": "assistant", "content": "Merhaba! Uçuş kontrol sistemleri hakkında ne sormak istersiniz?"}
+            {"role": "assistant", "content": "Merhaba! Proje teslimi için acil durum modu devrede. Uçuş kontrol sistemleri hakkında ne sormak istersiniz?"}
         ]
 
-    # 4. Sohbet Geçmişini Görüntüleme
+    # 3. Sohbet Geçmişini Görüntüleme
     for msg in st.session_state["messages"]:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    # 5. Kullanıcı Girişini İşleme
+    # 4. Kullanıcı Girişini İşleme
     if prompt := st.chat_input("Sorunuzu buraya yazın..."):
-        # Kullanıcı mesajını ekle
         st.session_state["messages"].append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
 
-        # Cevabı üretme
         with st.spinner("Cevap aranıyor..."):
-            try:
-                # Yeni LCEL zincirini çağırma yöntemi
-                response = qa_chain.invoke({"input": prompt})
-                yanit = response['answer']
-                
-                # Asistan cevabını ekle
-                st.session_state["messages"].append({"role": "assistant", "content": yanit})
-                st.chat_message("assistant").write(yanit)
+            yanit = generate_rag_response(prompt, embedding_model, index, sentences)
             
-            except Exception as e:
-                # Hata durumunda mesaj
-                hata_mesaji = f"Üzgünüm, RAG zincirinde bir hata oluştu: {e}"
-                st.session_state["messages"].append({"role": "assistant", "content": hata_mesaji})
-                st.chat_message("assistant").write(hata_mesaji)
+            st.session_state["messages"].append({"role": "assistant", "content": yanit})
+            st.chat_message("assistant").write(yanit)
 
-# --- UYGULAMAYI BAŞLATMA ---
 if __name__ == "__main__":
     main()

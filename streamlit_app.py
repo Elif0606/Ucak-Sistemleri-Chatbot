@@ -66,22 +66,27 @@ def setup_rag_system():
                 contents=batch # Buradaki 'contents' doğru
             )
             # Gelen gömmeleri ana listeye ekle
-            all_embeddings.extend(response.embeddings)
+            all_embeddings.extend(response.embeddings) # Doğru erişim
             st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
         
-        # Tüm gömmeleri NumPy dizisine dönüştürme
+        # 5. Güvenlik Kontrolü ve NumPy'a Dönüştürme
+        if not all_embeddings:
+            st.error("HATA: Gemini API'den hiçbir gömme (embedding) alınamadı. Lütfen API anahtarınızı veya PDF içeriğini kontrol edin.")
+            return None, None, None # Hata durumunda fonksiyonu sonlandır
+
         embeddings = np.array(all_embeddings)
         
     except Exception as e:
         st.error(f"Gemini Embedding Hatası: {e}")
-        return None, None
+        return None, None, None # Hata durumunda fonksiyonu sonlandır
     
-    # FAISS indeksi: Vektörleri aramak için
-    dimension = embeddings.shape[1]
+    # KODUN HATA VERDİĞİ YER: 
+    # Dizinin boş olup olmadığını kontrol ettik, şimdi boyut alınıyor.
+    # Eğer dizi boş değilse, bu satır sorunsuz çalışacaktır.
+    dimension = embeddings.shape[1] 
     index = faiss.IndexFlatL2(dimension)
     index.add(embeddings)
     
-    # Model objesi yerine model adını döndürüyoruz
     return embedding_model_name, index, sentences
 
 

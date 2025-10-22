@@ -51,13 +51,27 @@ def setup_rag_system():
     # 4. Gömmeleri Oluşturma ve FAISS İndeksi Kurma
     st.info("İlk kullanımda güçlü Gemini embedding modeli ile indeks oluşturuluyor. Lütfen bekleyin...")
     
+    # BATCH BOYUTU: Gemini'nin limiti 100 olduğu için 90 kullanıyoruz.
+    BATCH_SIZE = 90
+    all_embeddings = []
+
     try:
-        # Gemini API ile toplu gömme oluşturma
-        response = client.models.embed_content(
-            model=embedding_model_name,
-            contents=sentences
-        )
-        embeddings = np.array(response['embedding'])
+        # Metinleri 90'ar kişilik gruplara ayırma (Batching)
+        for i in range(0, len(sentences), BATCH_SIZE):
+            batch = sentences[i:i + BATCH_SIZE]
+            
+            # Gemini API çağrısı
+            response = client.models.embed_content(
+                model=embedding_model_name,
+                contents=batch # Buradaki 'contents' doğru
+            )
+            # Gelen gömmeleri ana listeye ekle
+            all_embeddings.extend(response['embedding'])
+            st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
+        
+        # Tüm gömmeleri NumPy dizisine dönüştürme
+        embeddings = np.array(all_embeddings)
+        
     except Exception as e:
         st.error(f"Gemini Embedding Hatası: {e}")
         return None, None

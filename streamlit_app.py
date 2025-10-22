@@ -119,15 +119,14 @@ prompt = ChatPromptTemplate.from_messages(
 combine_docs_chain = create_stuff_documents_chain(llm, prompt)
 
 # 3. Nihai Retrieval Zincirini Oluşturma
-qa_chain = create_retrieval_chain(
-    retriever, # Yukarıda tanımlanan retriever nesnesi
-    combine_docs_chain
-)
-# ÖNEMLİ: Bu satır, üstteki 'qa_chain =' satırıyla aynı HİZADA olmalı.
-return qa_chain
+    qa_chain = create_retrieval_chain(
+        retriever, 
+        combine_docs_chain
+    )
+    return qa_chain # Bu satır, üstteki qa_chain = ile aynı hizada olmalı.
 
-# 6. Streamlit Arayüzü
-def main():
+# 6. Streamlit Arayüzü  <-- EN SOLDA OLMALI
+def main():          # <-- EN SOLDA OLMALI
     # Bu blok, fonksiyonun ana içeriğidir (1. seviye girinti)
     st.set_page_config(page_title="RAG Chatbot", layout="wide")
     st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")

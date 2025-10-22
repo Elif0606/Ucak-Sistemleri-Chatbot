@@ -1,8 +1,11 @@
-streamlit
+# ANA PAKETLERİ DAHA YUKARI ÇEKELİM VE GÜNCEL SÜRÜM KULLANALIM
 langchain>=0.2.14
+langchain-core>=0.2.10
 langchain-community>=0.2.10
+
+# Diğer paketler (sıralama fark etmez)
+streamlit
 langchain-google-genai
-langchain-core
 langchain-text-splitters
 pypdf
 chromadb

@@ -124,41 +124,39 @@ qa_chain = create_retrieval_chain(
     combine_docs_chain
 )
 # ÖNEMLİ: Bu satır, üstteki 'qa_chain =' satırıyla aynı HİZADA olmalı.
-return qa_chain 
-
+return qa_chain
 # 6. Streamlit Arayüzü
 def main():
-    # ... main fonksiyonunun geri kalanı ...
-    st.set_page_config(page_title="RAG Chatbot", layout="wide")
-    st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
-    st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")
+# ... main fonksiyonunun geri kalanı ...
+st.set_page_config(page_title="RAG Chatbot", layout="wide")
+st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
+st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")
 
-    qa_chain = setup_rag_system()
+qa_chain = setup_rag_system()
     
-    if qa_chain is None:
+if qa_chain is None:
         return
 
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = [
-            {"role": "assistant", "content": "Merhaba! Uçuş kontrol sistemleri hakkında ne sormak istersiniz?"}
+if "messages" not in st.session_state:
+st.session_state["messages"] = [
+{"role": "assistant", "content": "Merhaba! Uçuş kontrol sistemleri hakkında ne sormak istersiniz?"}
         ]
 
-    for msg in st.session_state["messages"]:
-        st.chat_message(msg["role"]).write(msg["content"])
+for msg in st.session_state["messages"]:
+st.chat_message(msg["role"]).write(msg["content"])
 
-    if prompt := st.chat_input("Sorunuzu buraya yazın..."):
-        st.session_state["messages"].append({"role": "user", "content": prompt})
-        st.chat_message("user").write(prompt)
+if prompt := st.chat_input("Sorunuzu buraya yazın..."):
+st.session_state["messages"].append({"role": "user", "content": prompt})
+st.chat_message("user").write(prompt)
 
-        with st.spinner("Cevap aranıyor..."):
-            try:
-                yanit = qa_chain.run(prompt)
-                st.session_state["messages"].append({"role": "assistant", "content": yanit})
-                st.chat_message("assistant").write(yanit)
-            except Exception as e:
-                hata_mesaji = f"Bir hata oluştu: {e}"
-                st.session_state["messages"].append({"role": "assistant", "content": hata_mesaji})
-                st.chat_message("assistant").write(hata_mesaji)
-
+with st.spinner("Cevap aranıyor..."):
+try:
+yanit = qa_chain.run(prompt)
+st.session_state["messages"].append({"role": "assistant", "content": yanit})
+st.chat_message("assistant").write(yanit)
+except Exception as e:
+hata_mesaji = f"Bir hata oluştu: {e}"
+st.session_state["messages"].append({"role": "assistant", "content": hata_mesaji})
+st.chat_message("assistant").write(hata_mesaji)
 if __name__ == "__main__":
-    main()
+main()

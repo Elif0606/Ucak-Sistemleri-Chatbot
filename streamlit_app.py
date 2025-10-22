@@ -41,32 +41,55 @@ def setup_rag_system():
         return None, None
 
     # 2. Metni Parçalama (Basit Metin Parçalayıcı)
-    # Cümle bazlı parçalama, daha sonra embedding yapısını korumak için
+    # Cümle bazlı parçalama, şimdi daha güçlü embedding modeli kullanacağız.
     sentences = [s.strip() for s in text.split('.') if s.strip()]
 
-    # 3. Embedding Modelini Yükleme (Lokal Model)
-    # Bu model, FAISS ile kullanılacak gömmeleri hızlıca oluşturur
-    embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    # 3. Gemini Embedding Modelini Hazırlama
+    embedding_model_name = "text-embedding-004"
+    client = genai.Client(api_key=API_KEY)
     
     # 4. Gömmeleri Oluşturma ve FAISS İndeksi Kurma
-    embeddings = embedding_model.encode(sentences, convert_to_tensor=True).cpu().numpy()
+    st.info("İlk kullanımda güçlü Gemini embedding modeli ile indeks oluşturuluyor. Lütfen bekleyin...")
+    
+    try:
+        # Gemini API ile toplu gömme oluşturma
+        response = client.models.embed_content(
+            model=embedding_model_name,
+            content=sentences,
+            task_type="RETRIEVAL_DOCUMENT"
+        )
+        embeddings = np.array(response['embedding'])
+    except Exception as e:
+        st.error(f"Gemini Embedding Hatası: {e}")
+        return None, None
     
     # FAISS indeksi: Vektörleri aramak için
-    index = faiss.IndexFlatL2(embeddings.shape[1])
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
     index.add(embeddings)
     
-    return embedding_model, index, sentences
+    # Model objesi yerine model adını döndürüyoruz
+    return embedding_model_name, index, sentences
 
 
 # --- CEVAP OLUŞTURMA FONKSİYONU ---
 
-def generate_rag_response(prompt, embedding_model, index, sentences):
+def generate_rag_response(prompt, embedding_model_name, index, sentences):
+    client = genai.Client(api_key=API_KEY)
     
-    # 1. Prompt'un Gömmesini Oluşturma
-    query_embedding = embedding_model.encode([prompt], convert_to_tensor=True).cpu().numpy()
+    # 1. Prompt'un Gömmesini Oluşturma (Gemini ile)
+    try:
+        query_response = client.models.embed_content(
+            model=embedding_model_name,
+            content=[prompt],
+            task_type="RETRIEVAL_QUERY"
+        )
+        query_embedding = np.array(query_response['embedding'])
+    except Exception as e:
+        return f"Sorgu Gömmesi Hatası: {e}"
     
     # 2. En Yakın Parçaları FAISS ile Arama
-    k = 3 # En iyi 3 parçayı al
+    k = 4 # Bağlamı artırmak için 4 parçayı alalım
     distances, indices = index.search(query_embedding, k)
     
     # 3. Bağlamı (Context) Birleştirme
@@ -83,8 +106,6 @@ def generate_rag_response(prompt, embedding_model, index, sentences):
     
     # 5. Gemini API Çağrısı
     try:
-        # Client objesini API_KEY ile başlatmak yeterlidir.
-        client = genai.Client(api_key=API_KEY)
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=[

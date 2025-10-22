@@ -1,8 +1,11 @@
-langchain
-langchain-core
-langchain-community
+streamlit
+# Sadece ana paketlerin Topluluk ve Core'u yüklemesini sağlıyoruz
+langchain==0.2.14 
+langchain-core==0.2.14
+langchain-community==0.2.14 
+
+# Diğer paketler
 langchain-google-genai
 langchain-text-splitters
 pypdf
 chromadb
-streamlit

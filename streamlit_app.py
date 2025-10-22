@@ -10,12 +10,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
 # Yeni LCEL (Expression Language) Zincir Fonksiyonları
-# Modülün doğrudan topluluk paketindeki doğru konumu
-from langchain_community.chains.combine_documents import create_stuff_documents_chain
+# create_stuff_documents_chain için en stabil yol (Doğrudan alt modül)
+from langchain.chains.combine_documents import create_stuff_documents_chain
 
-# LangChain, create_retrieval_chain'i bazen ana paketin köküne taşır
+# create_retrieval_chain için en stabil yol (Doğrudan ana paket)
 from langchain.chains import create_retrieval_chain
-
 # --- SABİT AYARLAR ---
 GEMINI_MODEL = "gemini-2.5-flash"
 EMBEDDING_MODEL = "embedding-001"

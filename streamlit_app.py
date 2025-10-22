@@ -82,16 +82,16 @@ def setup_rag_system():
         return None, None, None
 
     try:
-        # NumPy'a güvenli dönüştürme için np.vstack kullanma (IndexError çözümü)
-        embeddings = np.vstack(all_embeddings) 
-    except ValueError as e:
-        st.error(f"Embeddings dizisi oluşturulurken hata: {e}. Muhtemelen boş bir gömme geldi.")
-        return None, None, None
+            # np.vstack ile birleştirip, ardından astype(np.float32) ile veri tipini FAISS için zorluyoruz.
+            embeddings = np.vstack(all_embeddings).astype(np.float32) 
+        except ValueError as e:
+            st.error(f"Embeddings dizisi oluşturulurken hata: {e}. Muhtemelen boş bir gömme geldi.")
+            return None, None, None
 
-    # FAISS indeksi oluşturma
-    dimension = embeddings.shape[1] 
-    index = faiss.IndexFlatL2(dimension)
-    index.add(embeddings)
+        # FAISS indeksi oluşturma
+        dimension = embeddings.shape[1] 
+        index = faiss.IndexFlatL2(dimension)
+        index.add(embeddings) # Bu satır artık hata vermeyecektir.
     
     # Model adını döndürme
     return embedding_model_name, index, sentences

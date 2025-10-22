@@ -123,11 +123,12 @@ qa_chain = create_retrieval_chain(
     retriever, # Yukarıda tanımlanan retriever nesnesi
     combine_docs_chain
 )
-# Bu satır, üstteki "qa_chain =" satırıyla aynı hizada olmalı.
-return qa_chain
+# ÖNEMLİ: Bu satır, üstteki 'qa_chain =' satırıyla aynı HİZADA olmalı.
+return qa_chain 
 
 # 6. Streamlit Arayüzü
 def main():
+    # ... main fonksiyonunun geri kalanı ...
     st.set_page_config(page_title="RAG Chatbot", layout="wide")
     st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
     st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")

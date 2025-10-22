@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 from google.genai.errors import APIError
 
 # RAG için gerekli kütüphaneler
@@ -17,7 +17,10 @@ PDF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "veri_seti",
 # API Anahtarını Streamlit Secrets'tan güvenli bir şekilde al
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
-    genai.configure(api_key=API_KEY)
+    # 20. satır: Genellikle bu eski bir LangChain veya SDK metoduydu.
+    # En güncel SDK'da bu satıra gerek yoktur, Client objesi otomatik yapılandırılır.
+    # Bu satırı SİLİN veya YORUM SATIRI yapın.
+    # genai.configure(api_key=API_KEY) 
 except KeyError:
     st.error("HATA: GEMINI_API_KEY Streamlit Secrets'ta tanımlı değil! Lütfen secrets.toml dosyasını kontrol edin.")
     API_KEY = None
@@ -80,6 +83,7 @@ def generate_rag_response(prompt, embedding_model, index, sentences):
     
     # 5. Gemini API Çağrısı
     try:
+        # Client objesini API_KEY ile başlatmak yeterlidir.
         client = genai.Client(api_key=API_KEY)
         response = client.models.generate_content(
             model="gemini-2.5-flash",

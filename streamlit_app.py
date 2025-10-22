@@ -64,9 +64,22 @@ def setup_rag_system():
                 model=embedding_model_name,
                 contents=batch # Doğru parametre adı
             )
-            # BURADAKİ DÜZELTME: API'den gelen listeyi NumPy dizisine dönüştürüp ekleyin
-            all_embeddings.append(np.array(response.embeddings)) # <-- Her bir batch'i NumPy array'ine çeviriyoruz
+            
+            # YENİ VE GÜVENLİ KOD BAŞLANGICI (Boyut Kontrolü)
+            
+            # Gelen gömmeleri NumPy'a çeviriyoruz
+            current_embeddings = np.array(response.embeddings)
+            
+            # GÜVENLİK KONTROLÜ: Boyut doğru değilse (768), bu batch'i atla.
+            # Gemini'nin embedding boyutu 768'dir.
+            if current_embeddings.shape[1] == 768:
+                all_embeddings.append(current_embeddings)
+            else:
+                st.warning(f"UYARI: {i+1}. batch'te boyut tutarsızlığı bulundu. Atlanıyor. (Boyut: {current_embeddings.shape[1]})")
+                
             st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
+            
+            # YENİ VE GÜVENLİ KOD SONU
         
     except Exception as e:
         # Eğer API çağrısında hata olursa (Ağ/API Anahtarı)

@@ -125,12 +125,13 @@ qa_chain = create_retrieval_chain(
 )
 # ÖNEMLİ: Bu satır, üstteki 'qa_chain =' satırıyla aynı HİZADA olmalı.
 return qa_chain
+
 # 6. Streamlit Arayüzü
 def main():
 # ... main fonksiyonunun geri kalanı ...
-st.set_page_config(page_title="RAG Chatbot", layout="wide")
-st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
-st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")
+    st.set_page_config(page_title="RAG Chatbot", layout="wide")
+    st.title("Uçak Kontrol Sistemleri RAG Chatbot 🤖")
+    st.caption("Veri Kaynağı: Uçak Kontrol Sistemleri PDF'i")
 
 qa_chain = setup_rag_system()
     

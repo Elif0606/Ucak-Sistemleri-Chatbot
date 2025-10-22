@@ -123,7 +123,8 @@ qa_chain = create_retrieval_chain(
     retriever, # Yukarıda tanımlanan retriever nesnesi
     combine_docs_chain
 )
-    return qa_chain
+# Bu satır, üstteki "qa_chain =" satırıyla aynı hizada olmalı.
+return qa_chain
 
 # 6. Streamlit Arayüzü
 def main():

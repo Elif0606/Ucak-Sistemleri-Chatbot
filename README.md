@@ -49,8 +49,7 @@ Erişim ve Yanıtlama (Retrieval & Generation): Kullanıcı sorusu geldiğinde, 
 
 # Web Arayüzü ve Kullanım Kılavuzu : 
 
-Deploy Link: https://ucak-sistemleri-chatbot-atdqidezpujzntky2w9w7l.streamlit.app/
-
+Deploy Link: [](https://ucak-sistemleri-chatbot-ghajjtz7m4fk5sgt2pjcxz.streamlit.app/)
 Çalışma Akışı: Kullanıcı, sohbet kutusuna teknik bir soru yazar. Streamlit, soruyu RAG zincirine gönderir. Ekran, cevap gelene kadar "Cevap aranıyor..." spinner'ı gösterir. Cevap geldiğinde sohbet geçmişine eklenir.
 
 Kabiliyetleri Test Etme (Örnek Sorular): 

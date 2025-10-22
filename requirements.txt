@@ -1,8 +1,8 @@
 streamlit
-# LangChain'in güncel, kararlı ve Pydantic uyumlu sürümü
 langchain>=0.2.14
 langchain-community>=0.2.10
 langchain-google-genai
+langchain-core
 langchain-text-splitters
 pypdf
 chromadb

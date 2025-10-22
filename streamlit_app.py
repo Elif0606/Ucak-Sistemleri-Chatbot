@@ -10,8 +10,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
 # Yeni LCEL (Expression Language) Zincir Fonksiyonları
-from langchain_community.chains.combine_documents import create_stuff_documents_chain
-from langchain_community.chains.retrieval import create_retrieval_chain
+from langchain.chains import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
 
 # --- SABİT AYARLAR ---
 GEMINI_MODEL = "gemini-2.5-flash"

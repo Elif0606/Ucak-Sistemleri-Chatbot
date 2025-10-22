@@ -55,8 +55,7 @@ def setup_rag_system():
         # Gemini API ile toplu gömme oluşturma
         response = client.models.embed_content(
             model=embedding_model_name,
-            contents=sentences,
-            task_type="RETRIEVAL_DOCUMENT"
+            contents=sentences
         )
         embeddings = np.array(response['embedding'])
     except Exception as e:
@@ -81,8 +80,7 @@ def generate_rag_response(prompt, embedding_model_name, index, sentences):
     try:
         query_response = client.models.embed_content(
             model=embedding_model_name,
-            contents=[prompt],
-            task_type="RETRIEVAL_QUERY"
+            contents=[prompt]
         )
         query_embedding = np.array(query_response['embedding'])
     except Exception as e:

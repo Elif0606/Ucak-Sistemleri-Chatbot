@@ -66,7 +66,7 @@ def setup_rag_system():
                 contents=batch # Buradaki 'contents' doğru
             )
             # Gelen gömmeleri ana listeye ekle
-            all_embeddings.extend(response.embedding)
+            all_embeddings.extend(response.embeddings)
             st.caption(f"İlerleme: {i + len(batch)}/{len(sentences)} cümle gömmesi tamamlandı.")
         
         # Tüm gömmeleri NumPy dizisine dönüştürme
@@ -96,7 +96,7 @@ def generate_rag_response(prompt, embedding_model_name, index, sentences):
             model=embedding_model_name,
             contents=[prompt]
         )
-        query_embedding = np.array(query_response.embedding)
+        query_embedding = np.array(query_response.embeddings)
     except Exception as e:
         return f"Sorgu Gömmesi Hatası: {e}"
     
